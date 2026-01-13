@@ -8,9 +8,7 @@ import { TextBlock } from '@anthropic-ai/sdk/resources/messages.mjs'
 import { anthropic } from '../llm/anthropic'
 
 const MOCK_ENV = {
-  API_KEY: import.meta.env.VITE_API_KEY,
-
-  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
+  // For non-OpenAI services, we still use environment variables
   VERTEX_ANTROPIC_GOOGLE_SA_CLIENT_EMAIL: import.meta.env.VITE_VERTEX_ANTROPIC_GOOGLE_SA_CLIENT_EMAIL,
   VERTEX_ANTROPIC_GOOGLE_SA_PRIVATE_KEY: import.meta.env.VITE_VERTEX_ANTROPIC_GOOGLE_SA_PRIVATE_KEY,
   VERTEX_ANTROPIC_REGION: import.meta.env.VITE_VERTEX_ANTROPIC_REGION,
@@ -21,7 +19,8 @@ const MOCK_ENV = {
 let mock: OpenAI
 beforeAll(() => {
   mock = new OpenAI({
-    apiKey: import.meta.env.VITE_API_KEY,
+    // Users now provide their own OpenAI API key via Authorization header
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     fetch: async (_url, init) => {
       return app.request('/v1/chat/completions', { method: 'POST', ...init }, MOCK_ENV)
     },
@@ -173,37 +172,44 @@ describe('stream', () => {
 })
 
 describe('list models', async () => {
-  it('no api key', async () => {
+  it('no authorization header', async () => {
+    const r = await app.request('/v1/models', {}, {})
+    expect(r.status).eq(401)
+    const body = await r.json()
+    expect(body.error).includes('Unauthorized')
+  })
+  it('with user-provided openai api key', async () => {
     const r = (await (
       await app.request(
         '/v1/models',
         {
-          headers: { Authorization: 'Bearer ' + import.meta.env.VITE_API_KEY },
+          headers: { Authorization: 'Bearer ' + import.meta.env.VITE_OPENAI_API_KEY },
         },
-        pick(MOCK_ENV, 'API_KEY'),
+        {},
       )
     ).json()) as OpenAI.Models.ModelsPage
-    expect(r.data).empty
+    expect(r.data.length).greaterThan(0)
+    expect(r.data.some(it => it.id.includes('gpt'))).true
   })
-  it('anthropic api key', async () => {
+  it('with anthropic configured in env', async () => {
     const r = (await (
       await app.request(
         '/v1/models',
         {
           headers: {
-            Authorization: 'Bearer ' + import.meta.env.VITE_API_KEY,
+            Authorization: 'Bearer dummy-key',
           },
         },
-        pick(MOCK_ENV, 'API_KEY', 'ANTROPIC_API_KEY'),
+        pick(MOCK_ENV, 'ANTROPIC_API_KEY'),
       )
     ).json()) as OpenAI.Models.ModelsPage
     expect(r.data.map((it) => it.id)).deep.eq(anthropic(MOCK_ENV).supportModels)
   })
-  it('openai api key', async () => {
+  it('openai api key via SDK', async () => {
     const client = new OpenAI({
-      apiKey: import.meta.env.VITE_API_KEY,
+      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
       fetch: async (_url, init) => {
-        return app.request('/v1/models', init, MOCK_ENV)
+        return app.request('/v1/models', init, {})
       },
     })
     const r = await client.models.list()
