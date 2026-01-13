@@ -14,9 +14,9 @@ import { openrouter } from '../llm/openrouter'
 import { cerebras } from '../llm/cerebras'
 
 // --- getModels: Lists all REAL, configured backend providers ---
-export function getModels(env: Record<string, string>) {
-  return [
-    openai(env),
+export function getModels(env: Record<string, string>, openaiApiKey?: string) {
+  const models = [
+    openai(env, openaiApiKey),
     anthropic(env),
     anthropicVertex(env),
     google(env),
@@ -31,5 +31,15 @@ export function getModels(env: Record<string, string>) {
     grok(env),
     openrouter(env),
     cerebras(env),
-  ].filter((it) => it.requiredEnv.every((it) => it in env))
+  ]
+  
+  // Filter out providers that don't have their required environment variables
+  // Special case: OpenAI can work with either env var OR user-provided key
+  return models.filter((it) => {
+    if (it.name === 'openai') {
+      // OpenAI is available if user provides key OR env has key
+      return openaiApiKey || env.OPENAI_API_KEY
+    }
+    return it.requiredEnv.every((key) => key in env)
+  })
 }

@@ -6,8 +6,8 @@ import { openAiRouter } from './api/openai'
 import { ollamaRouter } from './api/ollama'
 
 export interface Bindings {
-  API_KEY: string
-  OPENAI_API_KEY: string
+  API_KEY?: string
+  OPENAI_API_KEY?: string
 }
 
 const app = new Hono<{
