@@ -6,7 +6,10 @@ import { streamSSE } from 'hono/streaming'
 
 // Helper function to extract API key from Authorization header
 function extractApiKey(c: Context<{ Bindings: Bindings }>): string {
-  const authHeader = c.req.header('Authorization')!
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader) {
+    throw new Error('Authorization header is missing')
+  }
   return authHeader.replace('Bearer ', '')
 }
 

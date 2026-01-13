@@ -34,7 +34,7 @@ export function getModels(env: Record<string, string>, openaiApiKey?: string) {
   ]
   
   // Filter out providers that don't have their required environment variables
-  // OpenAI is special: it can work with either env var OR user-provided key
+  // Special case: OpenAI can work with either env var OR user-provided key
   return models.filter((it) => {
     if (it.name === 'openai') {
       // OpenAI is available if user provides key OR env has key
