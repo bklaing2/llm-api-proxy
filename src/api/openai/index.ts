@@ -97,6 +97,11 @@ async function createResponse(c: Context<{ Bindings: Bindings }>) {
     | OpenAI.Responses.ResponseCreateParamsNonStreaming
     | OpenAI.Responses.ResponseCreateParamsStreaming
 
+  // Verify OpenAI API key is configured
+  if (!c.env.OPENAI_API_KEY) {
+    return c.json({ error: 'OpenAI API key not configured' }, 500)
+  }
+
   const client = getOpenAIClient(c)
 
   // Check if streaming is requested
@@ -139,6 +144,11 @@ async function createResponse(c: Context<{ Bindings: Bindings }>) {
 async function retrieveResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
 
+  // Verify OpenAI API key is configured
+  if (!c.env.OPENAI_API_KEY) {
+    return c.json({ error: 'OpenAI API key not configured' }, 500)
+  }
+
   const client = getOpenAIClient(c)
 
   // Check if streaming is requested via query params (per OpenAI API spec)
@@ -179,6 +189,11 @@ async function retrieveResponse(c: Context<{ Bindings: Bindings }>) {
 async function deleteResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
 
+  // Verify OpenAI API key is configured
+  if (!c.env.OPENAI_API_KEY) {
+    return c.json({ error: 'OpenAI API key not configured' }, 500)
+  }
+
   const client = getOpenAIClient(c)
 
   await client.responses.delete(responseId)
@@ -187,6 +202,11 @@ async function deleteResponse(c: Context<{ Bindings: Bindings }>) {
 
 async function cancelResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
+
+  // Verify OpenAI API key is configured
+  if (!c.env.OPENAI_API_KEY) {
+    return c.json({ error: 'OpenAI API key not configured' }, 500)
+  }
 
   const client = getOpenAIClient(c)
 
