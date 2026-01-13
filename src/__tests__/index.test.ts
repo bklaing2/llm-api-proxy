@@ -189,7 +189,7 @@ describe('list models', async () => {
       )
     ).json()) as OpenAI.Models.ModelsPage
     expect(r.data.length).greaterThan(0)
-    expect(r.data.some(it => it.id.includes('gpt'))).true
+    expect(r.data.some(it => it.id.includes('gpt'))).toBe(true)
   })
   it('with anthropic configured in env', async () => {
     const r = (await (

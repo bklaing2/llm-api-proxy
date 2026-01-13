@@ -10,6 +10,9 @@ function extractApiKey(c: Context<{ Bindings: Bindings }>): string {
   if (!authHeader) {
     throw new Error('Authorization header is missing')
   }
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new Error('Authorization header must be in Bearer format')
+  }
   return authHeader.replace('Bearer ', '')
 }
 
