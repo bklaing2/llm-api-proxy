@@ -16,11 +16,9 @@ export function openAiRouter(): Hono<{
       return c.json({ body: 'ok' })
     })
     .use('*', async (c, next) => {
-      if (!c.env.API_KEY) {
-        return c.json({ error: 'Unauthorized' }, 401)
-      }
-      if (`Bearer ${c.env.API_KEY}` !== c.req.header('Authorization')) {
-        return c.json({ error: 'Unauthorized' }, 401)
+      const authHeader = c.req.header('Authorization')
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return c.json({ error: 'Unauthorized: Missing or invalid Authorization header' }, 401)
       }
       return next()
     })
@@ -34,7 +32,12 @@ async function completions(c: Context<{ Bindings: Bindings }>) {
   const req = (await c.req.json()) as
     | OpenAI.ChatCompletionCreateParamsNonStreaming
     | OpenAI.ChatCompletionCreateParamsStreaming
-  const list = getModels(c.env as any)
+  
+  // Extract API key from Authorization header
+  const authHeader = c.req.header('Authorization')!
+  const apiKey = authHeader.replace('Bearer ', '')
+  
+  const list = getModels(c.env as any, apiKey)
   const llm = list.find((it) => it.supportModels.includes(req.model))
   if (!llm) {
     return c.json({ error: `Model ${req.model} not supported` }, 400)
@@ -63,9 +66,13 @@ async function completions(c: Context<{ Bindings: Bindings }>) {
 }
 
 async function models(c: Context<{ Bindings: Bindings }>) {
+  // Extract API key from Authorization header
+  const authHeader = c.req.header('Authorization')!
+  const apiKey = authHeader.replace('Bearer ', '')
+  
   return c.json({
     object: 'list',
-    data: getModels(c.env as any).flatMap((it) =>
+    data: getModels(c.env as any, apiKey).flatMap((it) =>
       it.supportModels.map(
         (model) =>
           ({

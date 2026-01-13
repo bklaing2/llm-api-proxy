@@ -32,11 +32,11 @@ Supported models
 
 Environment variables
 
-- `API_KEY`: Proxy API Key, required when calling the proxy API
 - `CORS_ORIGIN`: Allowed CORS domain, e.g. `https://example.com`
 
 - OpenAI: Supports OpenAI models, e.g. `gpt-4o-mini`
-  - `OPENAI_API_KEY`: OpenAI API Key
+  - **User-provided API Key**: When calling the proxy, users can provide their own OpenAI API key via the `Authorization: Bearer <YOUR_OPENAI_API_KEY>` header. The proxy will forward this key to OpenAI.
+  - `OPENAI_API_KEY` (Optional): If you want to use a shared OpenAI API Key for all requests instead of user-provided keys, set this environment variable.
 - VertexAI Anthropic: Supports Anthropic models on Google Vertex AI, e.g. `claude-3-5-sonnet@20240620`
   - `VERTEX_ANTROPIC_GOOGLE_SA_CLIENT_EMAIL`: Google Cloud Service Account Email
   - `VERTEX_ANTROPIC_GOOGLE_SA_PRIVATE_KEY`: Google Cloud Service Account Private Key
@@ -76,12 +76,12 @@ Environment variables
 
 Once deployed successfully, you can call different models through OpenAI's API interface.
 
-For example, calling OpenAI's API interface:
+For example, calling OpenAI's API interface with your own OpenAI API key:
 
 ```bash
 curl http://localhost:8787/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $API_KEY" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
      "model": "gpt-4o-mini",
      "messages": [
@@ -115,7 +115,7 @@ And it can be used in OpenAI's official SDK, for example:
 ```ts
 const openai = new OpenAI({
   baseURL: 'http://localhost:8787/v1',
-  apiKey: '$API_KEY',
+  apiKey: '$OPENAI_API_KEY', // Your OpenAI API key
 })
 
 const response = await openai.chat.completions.create({

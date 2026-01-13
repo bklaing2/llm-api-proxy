@@ -14,9 +14,9 @@ import { openrouter } from '../llm/openrouter'
 import { cerebras } from '../llm/cerebras'
 
 // --- getModels: Lists all REAL, configured backend providers ---
-export function getModels(env: Record<string, string>) {
+export function getModels(env: Record<string, string>, openaiApiKey?: string) {
   return [
-    openai(env),
+    openai(env, openaiApiKey),
     anthropic(env),
     anthropicVertex(env),
     google(env),

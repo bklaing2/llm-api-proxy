@@ -189,7 +189,7 @@ function openaiResponse(options: { createClient: (req: ChatCompletionCreateParam
   }
 }
 
-export function openai(env: Record<string, string>): IChat {
+export function openai(env: Record<string, string>, apiKey?: string): IChat {
   const oldModels = [
     'chatgpt-4o-latest',
     'codex-mini-latest',
@@ -274,9 +274,10 @@ export function openai(env: Record<string, string>): IChat {
     'gpt-5-chat-latest',
     'gpt-5-2025-08-07',
   ]
+  const effectiveApiKey = apiKey || env.OPENAI_API_KEY
   const client_builder = (model: string): IChat => {
     let base_client = new OpenAI({
-      apiKey: env.OPENAI_API_KEY,
+      apiKey: effectiveApiKey,
     })
     if (oldModels.includes(model)) {
       return openaiBase({ createClient: () => base_client })
@@ -287,7 +288,7 @@ export function openai(env: Record<string, string>): IChat {
   return {
     name: 'openai',
     supportModels: [...oldModels, ...newModels],
-    requiredEnv: ['OPENAI_API_KEY'],
+    requiredEnv: apiKey ? [] : ['OPENAI_API_KEY'],
     invoke: (req) => client_builder(req.model).invoke(req),
     stream: (req, signal) => client_builder(req.model).stream(req, signal),
   }
