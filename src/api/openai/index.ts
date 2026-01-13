@@ -15,6 +15,9 @@ export function openAiRouter(): Hono<{
     .options('/chat/completions', async (c) => {
       return c.json({ body: 'ok' })
     })
+    .options('/responses', async (c) => {
+      return c.json({ body: 'ok' })
+    })
     .use('*', async (c, next) => {
       if (!c.env.API_KEY) {
         return c.json({ error: 'Unauthorized' }, 401)
@@ -26,6 +29,10 @@ export function openAiRouter(): Hono<{
     })
     .post('/chat/completions', completions)
     .get('/models', models)
+    .post('/responses', createResponse)
+    .get('/responses/:id', retrieveResponse)
+    .delete('/responses/:id', deleteResponse)
+    .post('/responses/:id/cancel', cancelResponse)
 
   return app
 }
@@ -77,4 +84,118 @@ async function models(c: Context<{ Bindings: Bindings }>) {
       ),
     ),
   } as OpenAI.Models.ModelsPage)
+}
+
+async function createResponse(c: Context<{ Bindings: Bindings }>) {
+  const req = (await c.req.json()) as
+    | OpenAI.Responses.ResponseCreateParamsNonStreaming
+    | OpenAI.Responses.ResponseCreateParamsStreaming
+
+  // Get the OpenAI client
+  const client = new OpenAI({
+    apiKey: c.env.OPENAI_API_KEY,
+  })
+
+  // Check if streaming is requested
+  if (req.stream) {
+    const abortController = new AbortController()
+    return streamSSE(
+      c,
+      async (stream) => {
+        stream.onAbort(() => abortController.abort())
+        const responseStream = await client.responses.create({
+          ...req,
+          stream: true,
+        })
+        for await (const event of responseStream) {
+          if (abortController.signal.aborted) {
+            break
+          }
+          stream.writeSSE({ data: JSON.stringify(event) })
+        }
+      },
+      async (err, stream) => {
+        await stream.writeSSE({
+          data: JSON.stringify({
+            error: err.message,
+          }),
+        })
+        return stream.close()
+      },
+    )
+  }
+
+  // Non-streaming response
+  const response = await client.responses.create({
+    ...req,
+    stream: false,
+  })
+  return c.json(response)
+}
+
+async function retrieveResponse(c: Context<{ Bindings: Bindings }>) {
+  const responseId = c.req.param('id')
+
+  // Get the OpenAI client
+  const client = new OpenAI({
+    apiKey: c.env.OPENAI_API_KEY,
+  })
+
+  // Check if streaming is requested via query params
+  const stream = c.req.query('stream') === 'true'
+
+  if (stream) {
+    const abortController = new AbortController()
+    return streamSSE(
+      c,
+      async (stream) => {
+        stream.onAbort(() => abortController.abort())
+        const responseStream = await client.responses.retrieve(responseId, {
+          stream: true,
+        })
+        for await (const event of responseStream) {
+          if (abortController.signal.aborted) {
+            break
+          }
+          stream.writeSSE({ data: JSON.stringify(event) })
+        }
+      },
+      async (err, stream) => {
+        await stream.writeSSE({
+          data: JSON.stringify({
+            error: err.message,
+          }),
+        })
+        return stream.close()
+      },
+    )
+  }
+
+  // Non-streaming response
+  const response = await client.responses.retrieve(responseId)
+  return c.json(response)
+}
+
+async function deleteResponse(c: Context<{ Bindings: Bindings }>) {
+  const responseId = c.req.param('id')
+
+  // Get the OpenAI client
+  const client = new OpenAI({
+    apiKey: c.env.OPENAI_API_KEY,
+  })
+
+  await client.responses.delete(responseId)
+  return c.json({ deleted: true, id: responseId })
+}
+
+async function cancelResponse(c: Context<{ Bindings: Bindings }>) {
+  const responseId = c.req.param('id')
+
+  // Get the OpenAI client
+  const client = new OpenAI({
+    apiKey: c.env.OPENAI_API_KEY,
+  })
+
+  const response = await client.responses.cancel(responseId)
+  return c.json(response)
 }
