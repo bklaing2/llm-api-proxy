@@ -4,6 +4,12 @@ import OpenAI from 'openai'
 import { getModels } from '../common'
 import { streamSSE } from 'hono/streaming'
 
+// Helper function to extract API key from Authorization header
+function extractApiKey(c: Context<{ Bindings: Bindings }>): string {
+  const authHeader = c.req.header('Authorization')!
+  return authHeader.replace('Bearer ', '')
+}
+
 export function openAiRouter(): Hono<{
   Bindings: Bindings
 }> {
@@ -33,9 +39,8 @@ async function completions(c: Context<{ Bindings: Bindings }>) {
     | OpenAI.ChatCompletionCreateParamsNonStreaming
     | OpenAI.ChatCompletionCreateParamsStreaming
   
-  // Extract API key from Authorization header
-  const authHeader = c.req.header('Authorization')!
-  const apiKey = authHeader.replace('Bearer ', '')
+  // Extract API key from Authorization header using helper
+  const apiKey = extractApiKey(c)
   
   const list = getModels(c.env as any, apiKey)
   const llm = list.find((it) => it.supportModels.includes(req.model))
@@ -66,9 +71,8 @@ async function completions(c: Context<{ Bindings: Bindings }>) {
 }
 
 async function models(c: Context<{ Bindings: Bindings }>) {
-  // Extract API key from Authorization header
-  const authHeader = c.req.header('Authorization')!
-  const apiKey = authHeader.replace('Bearer ', '')
+  // Extract API key from Authorization header using helper
+  const apiKey = extractApiKey(c)
   
   return c.json({
     object: 'list',
