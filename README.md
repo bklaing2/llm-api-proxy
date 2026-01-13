@@ -126,6 +126,34 @@ const response = await openai.chat.completions.create({
 console.log(response)
 ```
 
+Using the newer Responses API (supports advanced features like reasoning models):
+
+```bash
+curl http://localhost:8787/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+     "model": "gpt-4o",
+     "input": "Explain quantum computing in simple terms"
+   }'
+```
+
+Or using the OpenAI SDK:
+
+```ts
+const openai = new OpenAI({
+  baseURL: 'http://localhost:8787/v1',
+  apiKey: '$API_KEY',
+})
+
+const response = await openai.responses.create({
+  model: 'gpt-4o',
+  input: 'Explain quantum computing in simple terms',
+})
+
+console.log(response.output_text)
+```
+
 And Ollama API interface:
 
 Ollama provides local model serving. Since some clients, similar to certain IntelliJ IDEA integrations, don't support custom headers, the approach of placing the API Key (AK) in the path was adopted. Therefore, within IntelliJ, you can configure the endpoint as `http://localhost:8787/ollama/$API_KEY/v1`
@@ -149,6 +177,11 @@ curl http://localhost:8787/ollama/$API_KEY/v1/api/chat \
 
 - [/v1/chat/completions](https://platform.openai.com/docs/api-reference/chat/create)
 - [/v1/models](https://platform.openai.com/docs/api-reference/models)
+- [/v1/responses](https://platform.openai.com/docs/api-reference/responses) (OpenAI's newer Responses API)
+  - POST /v1/responses - Create a response
+  - GET /v1/responses/:id - Retrieve a response
+  - DELETE /v1/responses/:id - Delete a response
+  - POST /v1/responses/:id/cancel - Cancel a background response
 
 ### Ollama Compatibility
 
