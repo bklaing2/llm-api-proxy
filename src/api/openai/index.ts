@@ -37,6 +37,12 @@ export function openAiRouter(): Hono<{
   return app
 }
 
+function getOpenAIClient(c: Context<{ Bindings: Bindings }>): OpenAI {
+  return new OpenAI({
+    apiKey: c.env.OPENAI_API_KEY,
+  })
+}
+
 async function completions(c: Context<{ Bindings: Bindings }>) {
   const req = (await c.req.json()) as
     | OpenAI.ChatCompletionCreateParamsNonStreaming
@@ -91,10 +97,7 @@ async function createResponse(c: Context<{ Bindings: Bindings }>) {
     | OpenAI.Responses.ResponseCreateParamsNonStreaming
     | OpenAI.Responses.ResponseCreateParamsStreaming
 
-  // Get the OpenAI client
-  const client = new OpenAI({
-    apiKey: c.env.OPENAI_API_KEY,
-  })
+  const client = getOpenAIClient(c)
 
   // Check if streaming is requested
   if (req.stream) {
@@ -136,12 +139,9 @@ async function createResponse(c: Context<{ Bindings: Bindings }>) {
 async function retrieveResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
 
-  // Get the OpenAI client
-  const client = new OpenAI({
-    apiKey: c.env.OPENAI_API_KEY,
-  })
+  const client = getOpenAIClient(c)
 
-  // Check if streaming is requested via query params
+  // Check if streaming is requested via query params (per OpenAI API spec)
   const stream = c.req.query('stream') === 'true'
 
   if (stream) {
@@ -179,10 +179,7 @@ async function retrieveResponse(c: Context<{ Bindings: Bindings }>) {
 async function deleteResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
 
-  // Get the OpenAI client
-  const client = new OpenAI({
-    apiKey: c.env.OPENAI_API_KEY,
-  })
+  const client = getOpenAIClient(c)
 
   await client.responses.delete(responseId)
   return c.json({ deleted: true, id: responseId })
@@ -191,10 +188,7 @@ async function deleteResponse(c: Context<{ Bindings: Bindings }>) {
 async function cancelResponse(c: Context<{ Bindings: Bindings }>) {
   const responseId = c.req.param('id')
 
-  // Get the OpenAI client
-  const client = new OpenAI({
-    apiKey: c.env.OPENAI_API_KEY,
-  })
+  const client = getOpenAIClient(c)
 
   const response = await client.responses.cancel(responseId)
   return c.json(response)
