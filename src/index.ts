@@ -35,7 +35,9 @@ const app = new Hono<{
   .use(
     cors({
       origin: (_origin, c) => {
-        return c.env.CORS_ORIGIN || '*'
+        // Only set CORS header if CORS_ORIGIN is defined
+        // If not set, return undefined to block cross-origin requests
+        return c.env.CORS_ORIGIN || undefined
       },
     }),
   )
