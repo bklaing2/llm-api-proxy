@@ -3,10 +3,9 @@ import { cors } from 'hono/cors'
 
 export interface Bindings {
   OPENAI_API_KEY?: string
+  OPENAI_BASE_URL?: string
   CORS_ORIGIN?: string
 }
-
-const OPENAI_BASE_URL = 'https://api.openai.com'
 
 // Allowed headers to forward to OpenAI
 const ALLOWED_REQUEST_HEADERS = new Set([
@@ -50,7 +49,9 @@ const app = new Hono<{
       return c.json({ error: 'Invalid path' }, 400)
     }
     
-    const url = new URL(path, OPENAI_BASE_URL)
+    // Get base URL from environment or use default
+    const baseUrl = c.env.OPENAI_BASE_URL || 'https://api.openai.com'
+    const url = new URL(path, baseUrl)
     
     // Get API key from Authorization header or environment
     let apiKey = c.env.OPENAI_API_KEY

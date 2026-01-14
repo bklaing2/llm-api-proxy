@@ -12,8 +12,9 @@ This proxy accepts OpenAI API requests and forwards them directly to `https://ap
 
 ### Environment Variables
 
-- `CORS_ORIGIN` (Optional): Allowed CORS domain, e.g. `https://example.com`. If not set, defaults to allowing all origins (`*`).
+- `OPENAI_BASE_URL` (Optional): Base URL for the OpenAI API. Defaults to `https://api.openai.com`. Can be configured to use OpenAI-compatible APIs or different OpenAI endpoints.
 - `OPENAI_API_KEY` (Optional): If you want to use a shared OpenAI API Key for all requests instead of user-provided keys, set this environment variable.
+- `CORS_ORIGIN` (Optional): Allowed CORS domain, e.g. `https://example.com`. If not set, defaults to allowing all origins (`*`).
 
 **Recommended**: Allow users to provide their own OpenAI API key via the `Authorization: Bearer <YOUR_OPENAI_API_KEY>` header instead of using a shared key.
 
