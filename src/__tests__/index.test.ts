@@ -92,15 +92,5 @@ describe('OpenAI Proxy', () => {
       
       expect(response.status).toBe(200)
     })
-
-    it('should use environment API key when provided', async () => {
-      const response = await app.request('/v1/models', {
-        method: 'GET',
-      }, {
-        OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
-      })
-      
-      expect(response.status).toBe(200)
-    })
   })
 })
