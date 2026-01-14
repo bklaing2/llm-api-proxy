@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
 export interface Bindings {
-  OPENAI_API_KEY?: string
   OPENAI_BASE_URL?: string
   CORS_ORIGIN?: string
 }
@@ -53,16 +52,13 @@ const app = new Hono<{
     const baseUrl = c.env.OPENAI_BASE_URL || 'https://api.openai.com'
     const url = new URL(path, baseUrl)
     
-    // Get API key from Authorization header or environment
-    let apiKey = c.env.OPENAI_API_KEY
+    // Get API key from Authorization header
     const authHeader = c.req.header('Authorization')
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      apiKey = authHeader.replace('Bearer ', '')
-    }
-    
-    if (!apiKey) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return c.json({ error: 'Unauthorized: Missing API key' }, 401)
     }
+    
+    const apiKey = authHeader.replace('Bearer ', '')
     
     // Forward only allowed headers to OpenAI
     const headers = new Headers()
